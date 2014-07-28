@@ -50,20 +50,72 @@ namespace StoreAppRunner
         [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
         public extern IntPtr ActivateForProtocol([In] String appUserModelId, [In] IntPtr itemArray, [Out] out UInt32 processId);
     }
+
+    [ComImport, Guid("B1AEC16F-2383-4852-B0E9-8F0B1DC66B4D")]
+    public class PackageDebugSettings
+    {
+    }
+    public enum PACKAGE_EXECUTION_STATE
+    {
+        PES_UNKNOWN,
+        PES_RUNNING,
+        PES_SUSPENDING,
+        PES_SUSPENDED,
+        PES_TERMINATED
+    }
+    [ComImport, Guid("F27C3930-8029-4AD1-94E3-3DBA417810C1"),InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IPackageDebugSettings
+    {
+        int EnableDebugging([MarshalAs(UnmanagedType.LPWStr)] string packageFullName, [MarshalAs(UnmanagedType.LPWStr)] string debuggerCommandLine, IntPtr environment);
+        int DisableDebugging([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int Suspend([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int Resume([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int TerminateAllProcesses([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int SetTargetSessionId(int sessionId);
+        int EnumerageBackgroundTasks([MarshalAs(UnmanagedType.LPWStr)] string packageFullName,
+                                                      out uint taskCount, out int intPtr, [Out] string[] array);
+        int ActivateBackgroundTask(IntPtr something);
+        int StartServicing([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int StopServicing([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int StartSessionRedirection([MarshalAs(UnmanagedType.LPWStr)] string packageFullName, uint sessionId);
+        int StopSessionRedirection([MarshalAs(UnmanagedType.LPWStr)] string packageFullName);
+        int GetPackageExecutionState([MarshalAs(UnmanagedType.LPWStr)] string packageFullName,
+                                            out PACKAGE_EXECUTION_STATE packageExecutionState);
+        int RegisterForPackageStateChanges([MarshalAs(UnmanagedType.LPWStr)] string packageFullName,
+                               IntPtr pPackageExecutionStateChangeNotification, out uint pdwCookie);
+        int UnregisterForPackageStateChanges(uint dwCookie);
+    }
+
     public class ApplicationActivator
     {
         [DllImport("Ole32.dll")]
         private static extern int CoAllowSetForegroundWindow(IntPtr pUnk, IntPtr lpvReserved);
 
-        public static int Activate(String appUserModelId)
+        public static int Activate(String appUserModelId, String packageFullName)
         {
             uint PID = 0;
             //// Create ApplicationActivationManager instance and get its' handle
             var runner = new ApplicationActivationManager();
             //// Without this call, the app will be launched but will not be brought to the foreground.
             CoAllowSetForegroundWindow(Marshal.GetIUnknownForObject(runner), (IntPtr)null);
-            // Activate installed application
+            // Set debug mode for App and activate installed application
+            var debugSettings = (IPackageDebugSettings)(new PackageDebugSettings());
+            debugSettings.EnableDebugging(packageFullName, null, (IntPtr)null);
             runner.ActivateApplication(appUserModelId, null, ActivateOptions.None, out PID);
+            try
+            {
+                PACKAGE_EXECUTION_STATE appState;
+                if (debugSettings.GetPackageExecutionState(packageFullName, out appState) == 0 &&
+                    (appState == PACKAGE_EXECUTION_STATE.PES_SUSPENDED ||
+                     appState == PACKAGE_EXECUTION_STATE.PES_SUSPENDING))
+                {
+                    debugSettings.Resume(packageFullName);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("[WARN] Can't get/set application's execution state!");
+            }
             //// return PID of running app or 0, if app isn't started
             return (int) PID;
         }
@@ -156,7 +208,8 @@ function Start-Locally {
     $package = Get-AppxPackage $ID
     $manifest = Get-appxpackagemanifest $package
     $applicationUserModelId = $package.PackageFamilyName + "!" + $manifest.package.applications.application.id
+    $packageFullName = $package.PackageFullName
 
     add-type -TypeDefinition $code
-    Write-Host "ActivateApplication: " $applicationUserModelId ": " $([StoreAppRunner.ApplicationActivator]::Activate($applicationUserModelId))
+    Write-Host "ActivateApplication: " $applicationUserModelId "PID: " $([StoreAppRunner.ApplicationActivator]::Activate($applicationUserModelId, $packageFullName))
 }

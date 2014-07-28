@@ -50,6 +50,24 @@ namespace StoreAppRunner
         [MethodImpl(MethodImplOptions.InternalCall, MethodCodeType = MethodCodeType.Runtime)]
         public extern IntPtr ActivateForProtocol([In] String appUserModelId, [In] IntPtr itemArray, [Out] out UInt32 processId);
     }
+    public class ApplicationActivator
+    {
+        [DllImport("Ole32.dll")]
+        private static extern int CoAllowSetForegroundWindow(IntPtr pUnk, IntPtr lpvReserved);
+
+        public static int Activate(String appUserModelId)
+        {
+            uint PID = 0;
+            //// Create ApplicationActivationManager instance and get its' handle
+            var runner = new ApplicationActivationManager();
+            //// Without this call, the app will be launched but will not be brought to the foreground.
+            CoAllowSetForegroundWindow(Marshal.GetIUnknownForObject(runner), (IntPtr)null);
+            // Activate installed application
+            runner.ActivateApplication(appUserModelId, null, ActivateOptions.None, out PID);
+            //// return PID of running app or 0, if app isn't started
+            return (int) PID;
+        }
+    }
 }
 "@
 
@@ -139,9 +157,6 @@ function Start-Locally {
     $manifest = Get-appxpackagemanifest $package
     $applicationUserModelId = $package.PackageFamilyName + "!" + $manifest.package.applications.application.id
 
-    Write-Host "ActivateApplication: " $applicationUserModelId
-
     add-type -TypeDefinition $code
-    $appActivator = new-object StoreAppRunner.ApplicationActivationManager
-    $appActivator.ActivateApplication($applicationUserModelId,$null,[StoreAppRunner.ActivateOptions]::None,[ref]0) | Out-Null
+    Write-Host "ActivateApplication: " $applicationUserModelId ": " $([StoreAppRunner.ApplicationActivator]::Activate($applicationUserModelId))
 }

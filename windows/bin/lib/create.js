@@ -52,7 +52,6 @@ module.exports.run = function (argv) {
 
     // Copy our unique VERSION file, so peeps can tell what version this project was created from.
     shell.cp("-rf", path.join(root, 'VERSION'), projectPath);
-    //fso.CopyFile(ROOT +'\\VERSION',destPath + "\\" );
 
     // replace specific values in manifests' templates
     ["package.store.appxmanifest", "package.store80.appxmanifest", "package.phone.appxmanifest"].forEach(function (file) {

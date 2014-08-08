@@ -32,7 +32,7 @@ module.exports.run = function (argv) {
 
     // Set parameters/defaults for create
     var projectPath = args.argv.remain[0];
-    if (fs.existsSync(projectPath)){
+    if (fs.existsSync(projectPath)){ 
         return Q.reject("Project directory already exists:\n\t" + projectPath);
     }
     var packageName = args.argv.remain[1] || "Cordova.Example",
@@ -58,7 +58,7 @@ module.exports.run = function (argv) {
     });
 
     // Delete bld forder and bin folder
-    ["bld", "bin", "*.user", "*.suo", "MyTemplate.vstemplate"].forEach(function (file) {
+    ["bld", "bin", "*.user", "*.suo"].forEach(function (file) {
         shell.rm('-rf', path.join(projectPath, file));
     });
 

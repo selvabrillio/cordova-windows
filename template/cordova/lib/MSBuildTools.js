@@ -10,15 +10,15 @@ function MSBuildTools (version, path) {
 }
 
 MSBuildTools.prototype.buildProject = function(projFile, buildType, buildarch) {
-    logger.normal("\nBuilding project: " + projFile);
-    logger.normal("\tConfiguration : " + buildType);
-    logger.normal("\tPlatform      : " + buildarch);
+    logger.normal("Building project: " + projFile);
+    logger.verbose("\tConfiguration : " + buildType);
+    logger.verbose("\tPlatform      : " + buildarch);
 
     var args = ['/clp:NoSummary;NoItemAndPropertyList;Verbosity=minimal', '/nologo',
     '/p:Configuration=' + buildType,
     '/p:Platform=' + buildarch];
 
-    return spawn(path.join(this.path, 'msbuild'), [projFile].concat(args));
+    return spawn(path.join(this.path, 'msbuild'), [projFile].concat(args), null, 'normal');
 };
 
 // returns full path to msbuild tools required to build the project and tools version
@@ -28,7 +28,6 @@ module.exports.findAvailableVersion = function () {
     return Q.all(versions.map(checkMSBuildVersion)).then(function (versions) {
         // select first msbuild version available, and resolve promise with it
         var msbuildTools = versions[0] || versions[1];
-        !!msbuildTools && logger.verbose('Found MSBuild v' +  msbuildTools.version + ' at ' + msbuildTools.path);
         return msbuildTools ? Q.resolve(msbuildTools) : Q.reject('MSBuild tools not found');
     });
 };

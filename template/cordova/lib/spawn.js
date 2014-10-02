@@ -22,16 +22,22 @@ var Q    = require('q'),
     proc = require('child_process');
 
 // Takes a command and optional current working directory.
-module.exports = function(cmd, args, opt_cwd) {
+module.exports = function(cmd, args, opt_cwd, opt_verbosity) {
     var d = Q.defer();
     try {
         logger.verbose('Running ' + cmd + ' with ' + args);
-        var child = proc.spawn(cmd, args, {cwd: opt_cwd});
+        var child = proc.spawn(cmd, args, {cwd: opt_cwd}),
+            // use verbose log level for stdout if not specified
+            verbosity = opt_verbosity || 'verbose';
 
-        child.stdout.on('data', function (data) {
-            logger.verbose(data.toString().replace(/\n$/, ''));
+        child.stdout && child.stdout.on('data', function (data) {
+            // child process' data from stdout always contains trailing endline
+            // remove it since logger's log method will add it again
+            logger.log(verbosity, data.toString().replace(/\n$/, ''));
         });
-        child.stderr.on('data', function (data) {
+        child.stderr && child.stderr.on('data', function (data) {
+            // child process' data from stdout always contains trailing endline
+            // remove it since logger's log method will add it again
             logger.error(data.toString().replace(/\n$/, ''));
         });
 

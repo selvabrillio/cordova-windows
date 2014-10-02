@@ -21,8 +21,8 @@ var Q      = require('Q'),
     fs     = require('fs'),
     path   = require('path'),
     shell  = require('shelljs'),
-    logger = require('./logger'),
-    create = require('./create');
+    create = require('./create'),
+    logger = require('../../template/cordova/lib/logger');
 
 // returns package metadata from config.xml with fields 'namespace' and 'name'
 function extractMetadata(projectPath) {

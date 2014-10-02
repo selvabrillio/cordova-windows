@@ -36,7 +36,7 @@ module.exports.applyPlatformConfig = function () {
         if (rule.indexOf('https://') == 0 || rule == '*') {
             return true;
         } else {
-            logger.verbose('Access rules must begin with "https://", the following rule will be ignored: ' + rule);
+            logger.warn('Access rules must begin with "https://", the following rule will be ignored: ' + rule);
         }
         return false;
     });
@@ -216,7 +216,7 @@ function copyImages(config) {
         });
         // warn if no images found
         if (images.length == 0) {
-            logger.verbose('No images found for target: ' + destFileName);
+            logger.warn('No images found for target: ' + destFileName);
             return;
         }
         // copy images with new name but keeping scale suffix
@@ -277,7 +277,7 @@ function copyImages(config) {
             if (targetImg) {
                 copyImage(img.src, targetImg.dest);
             } else {
-                logger.verbose('The following image is skipped due to unsupported size: ' + img.src);
+                logger.warn('The following image is skipped due to unsupported size: ' + img.src);
             }
         }
     });

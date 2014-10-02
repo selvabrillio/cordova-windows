@@ -27,7 +27,7 @@
  */
 
 var create = require('./lib/create'),
-    logger = require('./lib/logger');
+    logger = require('../template/cordova/lib/logger');
 
 if (['--help', '/?', '-h', 'help', '-help', '/help'].indexOf(process.argv[2]) > -1) {
     create.help();

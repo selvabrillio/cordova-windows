@@ -20,7 +20,7 @@
 */
 
 var check_reqs = require('./lib/check_reqs'),
-    logger = require('./lib/logger');
+    logger = require('../template/cordova/lib/logger');
 
 // check for help flag
 if (['--help', '/?', '-h', 'help', '-help', '/help'].indexOf(process.argv[2]) > -1) {

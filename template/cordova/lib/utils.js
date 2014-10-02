@@ -46,7 +46,7 @@ module.exports.getAppDeployUtils = function () {
     logger.verbose('Trying to find AppDeploy utils at ' + appDeployUtils);
     // Check if AppDeployCmd is exists
     if (!fs.existsSync(appDeployUtils)) {
-        logger.normal("WARNING: AppDeploy tool (AppDeployCmd.exe) didn't found. Assume that it's in %PATH%");
+        logger.warn("AppDeploy tool (AppDeployCmd.exe) didn't found. Assume that it's in %PATH%");
         return Q.resolve("AppDeployCmd");
     }
     return Q.resolve(appDeployUtils);

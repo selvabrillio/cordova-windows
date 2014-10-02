@@ -170,7 +170,7 @@ function getBuildTargets() {
 
 function filterSupportedTargets (targets) {
     if (!targets || targets.length === 0) {
-        logger.normal("\r\nNo build targets are specified.");
+        logger.warn("\r\nNo build targets are specified.");
         return [];
     }
 
@@ -185,8 +185,8 @@ function filterSupportedTargets (targets) {
 
     // unsupported targets have been detected
     if (supportedTargets.length != targets.length) {
-        logger.normal("\r\nWarning. Windows 8.1 and Windows Phone 8.1 target platforms are not supported on this development machine and will be skipped.");
-        logger.normal("Please install OS Windows 8.1 and Visual Studio 2013 Update2 in order to build for Windows 8.1 and Windows Phone 8.1.\r\n");
+        logger.warn("\r\nWarning. Windows 8.1 and Windows Phone 8.1 target platforms are not supported on this development machine and will be skipped.");
+        logger.warn("Please install OS Windows 8.1 and Visual Studio 2013 Update2 in order to build for Windows 8.1 and Windows Phone 8.1.\r\n");
     }
     return supportedTargets;
 }

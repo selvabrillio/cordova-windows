@@ -23,7 +23,7 @@ var Q     = require('Q'),
     nopt  = require('nopt'),
     shell = require('shelljs'),
     uuid  = require('node-uuid'),
-    logger = require('./logger');
+    logger = require('../../template/cordova/lib/logger');
 
 // Creates cordova-windows project at specified path with specified namespace, app name and GUID
 module.exports.run = function (argv) {
@@ -45,12 +45,12 @@ module.exports.run = function (argv) {
         guid        = args['guid'] || uuid.v1(),
         root        = path.join(__dirname, '..', '..');
 
-    logger.info("Creating Cordova Windows Project:");
-    logger.info("\tApp Name  : " + appName);
-    logger.info("\tNamespace : " + packageName);
-    logger.info("\tPath      : " + projectPath);
+    logger.normal("Creating Cordova Windows Project:");
+    logger.normal("\tApp Name  : " + appName);
+    logger.normal("\tNamespace : " + packageName);
+    logger.normal("\tPath      : " + projectPath);
     if (templateOverrides) {
-        Log("\tCustomTemplatePath : " + templateOverrides);
+        logger.verbose("\tCustomTemplatePath : " + templateOverrides);
     }
 
     // Copy the template source files to the new destination

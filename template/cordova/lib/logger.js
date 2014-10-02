@@ -18,28 +18,42 @@
 */
 
 var util = require('util'),
+    ansi = require('ansi'),
     Stream = require('stream');
 
 var logger = {
     levels: {},
     prefixes: {},
+    colors: {},
     output: process.stdout
 };
+
+logger.cursor = ansi(logger.output);
 
 logger.log = function (logLevel, message) {
     if (this.levels[logLevel] >= this.levels[this.logLevel]) {
         var prefix = this.prefixes[logLevel] ? this.prefixes[logLevel] + ': ' : '';
-            // suffix = /.*(\r|\n)$/.test(message) ? '' : '\n';
             suffix = '\n';
-        this.output.write(prefix + message + suffix);
+            message = prefix + message + suffix;
+
+        if (!this.cursor) {
+            this.output.write(message);
+        }
+        if (this.output !== this.cursor.stream) {
+            this.cursor = ansi(this.output, { enabled: colorEnabled });
+        }
+        var color = this.colors[logLevel];
+        !!color && this.cursor.bold().fg[color]();
+        this.cursor.write(message);
+        this.cursor.reset();
     }
 };
 
-logger.addLevel = function (level, severity, prefix) {
+logger.addLevel = function (level, severity, prefix, color) {
     this.levels[level] = severity;
-    if (prefix) {
-        this.prefixes[level] = prefix;
-    }
+    prefix && (this.prefixes[level] = prefix);
+    color && (this.colors[level] = color);
+    
     if (!this[level]) {
         this[level] = this.log.bind(this, level);
         return this[level];
@@ -52,16 +66,11 @@ logger.setLevel = function (logLevel) {
     }
 };
 
-logger.setOutput = function (stream) {
-    if (stream instanceof Stream) {
-        this.output = stream;
-    }
-};
-
+logger.addLevel('verbose', 1000, '', 'grey');
 logger.addLevel('normal' , 2000);
+logger.addLevel('warn'   , 2000, 'WARN ', 'yellow');
 logger.addLevel('info'   , 5000);
-logger.addLevel('verbose', 1000, 'DEBUG');
-logger.addLevel('error'  , 5000, 'ERROR');
+logger.addLevel('error'  , 5000, 'ERROR', 'red');
 
 logger.setLevel('normal');
 
@@ -69,7 +78,7 @@ if (process.argv.slice(2).indexOf('--silent') >= 0) {
     logger.setLevel("error");
 }
 
-if (process.argv.slice(2).indexOf('--verbose') >= 0) {
+if (process.argv.slice(2).indexOf('--verbose') >= 0 || process.argv.slice(2).indexOf('-d') >= 0) {
     logger.setLevel("verbose");
 }
 

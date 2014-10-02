@@ -22,8 +22,9 @@
           sub:true
 */
 
-var et = require('elementtree'),
-    fs = require('fs');
+var fs = require('fs'),
+    et = require('elementtree'),
+    logger = require('./logger');
 
 /** Wraps a config.xml file */
 function ConfigParser(path) {
@@ -37,7 +38,7 @@ function ConfigParser(path) {
         this.doc = new et.ElementTree(et.XML(contents));
 
     } catch (e) {
-        console.error('Parsing '+path+' failed');
+        logger.error('Parsing '+path+' failed');
         throw e;
     }
     var r = this.doc.getroot();

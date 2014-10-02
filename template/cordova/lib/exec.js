@@ -18,6 +18,7 @@
 */
 
 var child_process = require('child_process'),
+    logger  = require('./logger'),
     Q       = require('q');
 
 // Takes a command and optional current working directory.
@@ -26,12 +27,13 @@ var child_process = require('child_process'),
 module.exports = function(cmd, opt_cwd) {
     var d = Q.defer();
     try {
+        logger.verbose('Running ' + cmd);
         child_process.exec(cmd, {cwd: opt_cwd, maxBuffer: 1024000}, function(err, stdout, stderr) {
             if (err) d.reject('Error executing "' + cmd + '": ' + stderr);
             else d.resolve(stdout);
         });
     } catch(e) {
-        console.error('error caught: ' + e);
+        logger.error('error caught: ' + e);
         d.reject(e);
     }
     return d.promise;

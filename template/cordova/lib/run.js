@@ -22,6 +22,7 @@ var Q = require('q'),
     path  = require('path'),
     build = require('./build'),
     utils = require('./utils'),
+    logger = require('./logger'),
     ConfigParser = require('./ConfigParser'),
     packages = require('./package');
 
@@ -65,7 +66,7 @@ module.exports.run = function (argv) {
     return buildPackages.then(function () {
         return packages.getPackage(projectType, buildType, buildArchs[0]);
     }).then(function(pkg) {
-        console.log('\nDeploying ' + pkg.type + ' package to ' + deployTarget + ':\n' + pkg.file);
+        logger.normal('\nDeploying ' + pkg.type + ' package to ' + deployTarget + ': ' + pkg.file);
         return pkg.type == "phone" ?
             packages.deployToPhone(pkg.file, deployTarget) :
             packages.deployToDesktop(pkg.file, deployTarget);

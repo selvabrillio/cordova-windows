@@ -18,13 +18,23 @@
 */
 
 var Q    = require('q'),
+    logger = require('./logger'),
     proc = require('child_process');
 
 // Takes a command and optional current working directory.
 module.exports = function(cmd, args, opt_cwd) {
     var d = Q.defer();
     try {
-        var child = proc.spawn(cmd, args, {cwd: opt_cwd, stdio: 'inherit'});
+        logger.verbose('Running ' + cmd + ' with ' + args);
+        var child = proc.spawn(cmd, args, {cwd: opt_cwd});
+
+        child.stdout.on('data', function (data) {
+            logger.verbose(data.toString().replace(/\n$/, ''));
+        });
+        child.stderr.on('data', function (data) {
+            logger.error(data.toString().replace(/\n$/, ''));
+        });
+
         child.on('exit', function(code) {
             if (code) {
                 d.reject('Error code ' + code + ' for command: ' + cmd + ' with args: ' + args);
@@ -33,7 +43,7 @@ module.exports = function(cmd, args, opt_cwd) {
             }
         });
     } catch(e) {
-        console.error('error caught: ' + e);
+        logger.error('error caught: ' + e);
         d.reject(e);
     }
     return d.promise;

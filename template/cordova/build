@@ -20,15 +20,18 @@
 */
 
 var build = require('./lib/build'),
+    logger = require('./lib/logger'),
     args  = process.argv;
 
 // Handle help flag
 if (['--help', '/?', '-h', 'help', '-help', '/help'].indexOf(args[2]) > -1) {
     build.help();
 } else {
-    build.run(args).done(null, function(err) {
+    build.run(args).done(function() {
+      logger.info('\nBuild successful');
+    }, function(err) {
         var errorMessage = (err && err.stack) ? err.stack : err;
-        console.error('ERROR: ' + errorMessage);
+        logger.error(errorMessage);
         process.exit(2);
     });
 }

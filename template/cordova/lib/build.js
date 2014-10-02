@@ -22,6 +22,7 @@ var Q     = require('Q'),
     nopt  = require('nopt'),
     spawn = require('./spawn'),
     utils = require('./utils'),
+    logger = require ('./logger'),
     prepare = require('./prepare'),
     MSBuildTools = require('./MSBuildTools'),
     ConfigParser = require('./ConfigParser');
@@ -62,7 +63,7 @@ module.exports.run = function run (argv) {
     return MSBuildTools.findAvailableVersion().then(
         function(msbuildTools) {
             msbuild = msbuildTools;
-            console.log('MSBuildToolsPath: ' + msbuild.path);
+            logger.verbose('MSBuildToolsPath: ' + msbuild.path);
             return buildTargets();
         });
 };
@@ -115,7 +116,7 @@ function buildTargets() {
     buildTargets.forEach(function(buildTarget) {
         buildArchs.forEach(function(buildArch) {
             buildConfigs.push({target:buildTarget, arch: buildArch});
-        })
+        });
     });
 
     // run builds serially
@@ -140,7 +141,7 @@ function getBuildTargets() {
     var noSwitches = !(args.phone || args.win);
     // Windows
     if (args.win || noSwitches) { // if --win or no arg
-        var windowsTargetVersion = config.getPreference('windows-target-version')
+        var windowsTargetVersion = config.getPreference('windows-target-version');
         switch(windowsTargetVersion) {
         case '8':
         case '8.0':
@@ -150,26 +151,26 @@ function getBuildTargets() {
             targets.push(projFiles.win);
             break;
         default:
-            throw new Error('Unsupported windows-target-version value: ' + windowsTargetVersion)
+            throw new Error('Unsupported windows-target-version value: ' + windowsTargetVersion);
         }
     }
     // Windows Phone
     if (args.phone || noSwitches) { // if --phone or no arg
-        var windowsPhoneTargetVersion = config.getPreference('windows-phone-target-version')
+        var windowsPhoneTargetVersion = config.getPreference('windows-phone-target-version');
         switch(windowsPhoneTargetVersion) {
         case '8.1':
             targets.push(projFiles.phone);
             break;
         default:
-            throw new Error('Unsupported windows-phone-target-version value: ' + windowsPhoneTargetVersion)
+            throw new Error('Unsupported windows-phone-target-version value: ' + windowsPhoneTargetVersion);
         }
     }
     return targets;
 }
 
 function filterSupportedTargets (targets) {
-    if (!targets || targets.length == 0) {
-        console.warn("\r\nNo build targets are specified.");
+    if (!targets || targets.length === 0) {
+        logger.normal("\r\nNo build targets are specified.");
         return [];
     }
 
@@ -184,8 +185,8 @@ function filterSupportedTargets (targets) {
 
     // unsupported targets have been detected
     if (supportedTargets.length != targets.length) {
-        console.warn("\r\nWarning. Windows 8.1 and Windows Phone 8.1 target platforms are not supported on this development machine and will be skipped.");
-        console.warn("Please install OS Windows 8.1 and Visual Studio 2013 Update2 in order to build for Windows 8.1 and Windows Phone 8.1.\r\n");
+        logger.normal("\r\nWarning. Windows 8.1 and Windows Phone 8.1 target platforms are not supported on this development machine and will be skipped.");
+        logger.normal("Please install OS Windows 8.1 and Visual Studio 2013 Update2 in order to build for Windows 8.1 and Windows Phone 8.1.\r\n");
     }
     return supportedTargets;
 }

@@ -19,9 +19,10 @@
        under the License.
 */
 
-var clean = require('./lib/clean');
+var clean = require('./lib/clean'),
+    logger = require('./lib/logger');
 
 clean.run(process.argv).done(null, function(err) {
-    console.error('ERROR: ' + err);
+    logger.error(err);
     process.exit(2);
 });

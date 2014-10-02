@@ -22,12 +22,15 @@ var Q     = require('q'),
     path  = require('path'),
     exec  = require('./exec'),
     spawn = require('./spawn'),
-    utils = require('./utils');
+    utils = require('./utils'),
+    logger = require('./logger');
 
 // returns folder that contains package with chip architecture,
 // build and project types specified by script parameters
 module.exports.getPackage = function (projectType, buildtype, buildArch) {
     var appPackages = path.resolve(path.join(__dirname, '..', '..', 'AppPackages'));
+    logger.verbose('Search for application packages in ' + appPackages);
+    
     // reject promise if apppackages folder doesn't exists
     if (!fs.existsSync(appPackages)) {
         return Q.reject('AppPackages doesn\'t exists');
@@ -139,12 +142,12 @@ module.exports.deployToPhone = function (appxPath, deployTarget) {
     // so we use separate steps to /install and then /launch
     return getTarget.then(function(target) {
         return utils.getAppDeployUtils().then(function(appDeployUtils) {
-            console.log('Installing application');
+            logger.verbose('Installing application');
             return spawn(appDeployUtils, ['/install', appxPath, '/targetdevice:' + target]).then(function() {
                 // TODO: resolve AppId without specifying project root;
                 return module.exports.getAppId(path.join(__dirname, '..', '..'));
             }).then(function(appId) {
-                console.log('Running application');
+                logger.verbose('Running application');
                 return spawn(appDeployUtils, ['/launch', appId, '/targetdevice:' + target]);
             });
         });
@@ -160,13 +163,13 @@ module.exports.deployToDesktop = function (appxScript, deployTarget) {
     return utils.getAppStoreUtils().then(function(appStoreUtils) {
         return module.exports.getPackageName(path.join(__dirname, '..', '..')).then(function(pkgname) {
             // uninstalls previous application instance (if exists)
-            console.log("Attempt to uninstall previous application version...");
+            logger.verbose("Attempt to uninstall previous application version...");
             return spawn('powershell', ['-ExecutionPolicy', 'RemoteSigned', 'Import-Module "' + appStoreUtils + '"; Uninstall-App ' + pkgname])
             .then(function() {
-                console.log("Attempt to install application...");
+                logger.verbose("Attempt to install application...");
                 return spawn('powershell', ['-ExecutionPolicy', 'RemoteSigned', 'Import-Module "' + appStoreUtils + '"; Install-App', utils.quote(appxScript)]);
             }).then(function() {
-                console.log("Starting application...");
+                logger.verbose("Starting application...");
                 return spawn('powershell', ['-ExecutionPolicy', 'RemoteSigned', 'Import-Module "' + appStoreUtils + '"; Start-Locally', pkgname]);
             });
         });

@@ -1,7 +1,8 @@
 var Q     = require('Q'),
     path  = require('path'),
     exec  = require('./exec'),
-    spawn  = require('./spawn');
+    spawn  = require('./spawn'),
+    logger = require('./logger');
 
 function MSBuildTools (version, path) {
     this.version = version;
@@ -9,16 +10,16 @@ function MSBuildTools (version, path) {
 }
 
 MSBuildTools.prototype.buildProject = function(projFile, buildType, buildarch) {
-    console.log("Building project: " + projFile);
-    console.log("\tConfiguration : " + buildType);
-    console.log("\tPlatform      : " + buildarch);
+    logger.normal("\nBuilding project: " + projFile);
+    logger.normal("\tConfiguration : " + buildType);
+    logger.normal("\tPlatform      : " + buildarch);
 
     var args = ['/clp:NoSummary;NoItemAndPropertyList;Verbosity=minimal', '/nologo',
     '/p:Configuration=' + buildType,
     '/p:Platform=' + buildarch];
 
     return spawn(path.join(this.path, 'msbuild'), [projFile].concat(args));
-}
+};
 
 // returns full path to msbuild tools required to build the project and tools version
 module.exports.findAvailableVersion = function () {
@@ -27,7 +28,7 @@ module.exports.findAvailableVersion = function () {
     return Q.all(versions.map(checkMSBuildVersion)).then(function (versions) {
         // select first msbuild version available, and resolve promise with it
         var msbuildTools = versions[0] || versions[1];
-
+        !!msbuildTools && logger.verbose('Found MSBuild v' +  msbuildTools.version + ' at ' + msbuildTools.path);
         return msbuildTools ? Q.resolve(msbuildTools) : Q.reject('MSBuild tools not found');
     });
 };

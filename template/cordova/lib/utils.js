@@ -21,32 +21,8 @@ var Q     = require('Q'),
     fs    = require('fs'),
     path  = require('path'),
     exec  = require('./exec'),
-    spawn = require('./spawn');
-
-// returns full path to msbuild tools required to build the project and tools version
-module.exports.getMSBuildTools = function () {
-    var versions = ['12.0', '4.0'];
-    // create chain of promises, which returns specific msbuild version object
-    // or null, if specific msbuild path not found in registry
-    return Q.all(versions.map(function (version) {
-        return exec(
-            'reg query HKLM\\SOFTWARE\\Microsoft\\MSBuild\\ToolsVersions\\' + version + ' /v MSBuildToolsPath'
-        ).then(function(output) {
-            // fetch msbuild path from 'reg' output
-            var msbPath = /MSBuildToolsPath\s+REG_SZ\s+(.*)/i.exec(output);
-            if (msbPath) {
-                return {version: version, path: msbPath[1]};
-            }
-            return null;
-        });
-    })).then(function (versions) {
-        // select first msbuild version available, and resolve promise with it
-        return versions[0] || versions[1] ?
-            Q.resolve(versions[0] || versions[1]) :
-            // Reject promise if no msbuild versions found
-            Q.reject('MSBuild tools not found');
-    });
-};
+    spawn = require('./spawn'),
+    logger = require('./logger');
 
 // unblocks and returns path to WindowsStoreAppUtils.ps1
 // which provides helper functions to install/unistall/start Windows Store app
@@ -55,7 +31,7 @@ module.exports.getAppStoreUtils = function () {
     if (!fs.existsSync (appStoreUtils)) {
         return Q.reject("Can't unblock AppStoreUtils script");
     }
-    //console.log("Removing execution restrictions from AppStoreUtils...");
+    logger.verbose("Removing execution restrictions from AppStoreUtils...");
     return spawn('powershell', ['Unblock-File', module.exports.quote(appStoreUtils)]).then(function () {
         return Q.resolve(appStoreUtils);
     }).fail(function (err) {
@@ -67,9 +43,10 @@ module.exports.getAppStoreUtils = function () {
 module.exports.getAppDeployUtils = function () {
     var appDeployUtils = path.join((process.env["ProgramFiles(x86)"] || process.env["ProgramFiles"]),
         'Microsoft SDKs', 'Windows Phone', 'v8.1', 'Tools', 'AppDeploy', 'AppDeployCmd.exe');
+    logger.verbose('Trying to find AppDeploy utils at ' + appDeployUtils);
     // Check if AppDeployCmd is exists
     if (!fs.existsSync(appDeployUtils)) {
-        console.warn("WARNING: AppDeploy tool (AppDeployCmd.exe) didn't found. Assume that it's in %PATH%");
+        logger.normal("WARNING: AppDeploy tool (AppDeployCmd.exe) didn't found. Assume that it's in %PATH%");
         return Q.resolve("AppDeployCmd");
     }
     return Q.resolve(appDeployUtils);

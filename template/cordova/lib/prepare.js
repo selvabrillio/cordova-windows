@@ -21,13 +21,14 @@ var path  = require('path'),
     fs  = require('fs'),
     et = require('elementtree'),
     shell = require('shelljs'),
+    logger = require('./logger'),
     ConfigParser = require('./ConfigParser');
 
 var ROOT = path.join(__dirname, '..', '..'),
     accessRules;
 
 module.exports.applyPlatformConfig = function () {
-    console.log('Applying Platform Config...');
+    logger.verbose('Applying Platform Config...');
 
     var config = new ConfigParser(path.join(ROOT, 'config.xml'));
 
@@ -35,7 +36,7 @@ module.exports.applyPlatformConfig = function () {
         if (rule.indexOf('https://') == 0 || rule == '*') {
             return true;
         } else {
-            console.log('Access rules must begin with "https://", the following rule will be ignored: ' + rule);
+            logger.verbose('Access rules must begin with "https://", the following rule will be ignored: ' + rule);
         }
         return false;
     });
@@ -50,6 +51,7 @@ module.exports.applyPlatformConfig = function () {
 
 function updateManifestFile (config, manifestPath) {
 
+    logger.verbose('Updating ' + manifestPath);
     var contents = fs.readFileSync(manifestPath, 'utf-8');
     if(contents) {
         //Windows is the BOM. Skip the Byte Order Mark.
@@ -196,7 +198,7 @@ function copyImages(config) {
     function copyImage(src, dest) {
         src = path.join(appRoot, src),
         dest = path.join(platformRoot, 'images', dest);
-        //console.log('Copying image from ' + src + ' to ' + dest);
+        logger.verbose('Copying image from ' + src + ' to ' + dest);
         shell.cp('-f', src, dest);
     }
 
@@ -214,7 +216,7 @@ function copyImages(config) {
         });
         // warn if no images found
         if (images.length == 0) {
-            console.log('No images found for target: ' + destFileName);
+            logger.verbose('No images found for target: ' + destFileName);
             return;
         }
         // copy images with new name but keeping scale suffix
@@ -275,7 +277,7 @@ function copyImages(config) {
             if (targetImg) {
                 copyImage(img.src, targetImg.dest);
             } else {
-                console.log('The following image is skipped due to unsupported size: ' + img.src);
+                logger.verbose('The following image is skipped due to unsupported size: ' + img.src);
             }
         }
     });

@@ -22,7 +22,8 @@ var Q     = require('Q'),
     path  = require('path'),
     nopt  = require('nopt'),
     shell = require('shelljs'),
-    uuid  = require('node-uuid');
+    uuid  = require('node-uuid'),
+    logger = require('./logger');
 
 // Creates cordova-windows project at specified path with specified namespace, app name and GUID
 module.exports.run = function (argv) {
@@ -44,30 +45,31 @@ module.exports.run = function (argv) {
         guid        = args['guid'] || uuid.v1(),
         root        = path.join(__dirname, '..', '..');
 
-    console.log("Creating Cordova Windows Project:");
-    console.log("\tApp Name  : " + appName);
-    console.log("\tNamespace : " + packageName);
-    console.log("\tPath      : " + projectPath);
+    logger.info("Creating Cordova Windows Project:");
+    logger.info("\tApp Name  : " + appName);
+    logger.info("\tNamespace : " + packageName);
+    logger.info("\tPath      : " + projectPath);
     if (templateOverrides) {
         Log("\tCustomTemplatePath : " + templateOverrides);
     }
 
     // Copy the template source files to the new destination
-    console.log('Copying template to ' + projectPath);
+    logger.verbose('Copying template to ' + projectPath);
     shell.cp("-rf", path.join(root, 'template', '*'), projectPath);
 
     // Copy our unique VERSION file, so peeps can tell what version this project was created from.
     shell.cp("-rf", path.join(root, 'VERSION'), projectPath);
 
     // copy node_modules to cordova directory
-    shell.cp('-r', path.join(root, 'node_modules'), path.join(projectPath, 'cordova'));
+    shell.cp('-rf', path.join(root, 'node_modules'), path.join(projectPath, 'cordova'));
 
     if (templateOverrides && fs.existsSync(templateOverrides)) {
-        console.log('Copying template overrides from ' + templateOverrides + ' to ' + projectPath);
+        logger.verbose('Copying template overrides from ' + templateOverrides + ' to ' + projectPath);
         shell.cp("-rf", templateOverrides, projectPath);
     }
 
     // replace specific values in manifests' templates
+    logger.verbose('Writing packageName: ' + packageName + ' and appName: ' + safeAppName + ' to manifest files');
     ["package.windows.appxmanifest", "package.windows80.appxmanifest", "package.phone.appxmanifest"].forEach(function (file) {
         var fileToReplace = path.join(projectPath, file);
         shell.sed('-i', /\$guid1\$/g, guid, fileToReplace);

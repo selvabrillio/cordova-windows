@@ -20,7 +20,8 @@
 var Q      = require('Q'),
     fs     = require('fs'),
     path   = require('path'),
-    shell   = require('shelljs'),
+    shell  = require('shelljs'),
+    logger = require('./logger'),
     create = require('./create');
 
 // returns package metadata from config.xml with fields 'namespace' and 'name'
@@ -55,15 +56,17 @@ module.exports.run = function (argv) {
     var projectPath = argv[2];
     if (!fs.existsSync(projectPath)){
         // if specified project path is not valid then reject promise
-        Q.reject("The given path to the project does not exist." +
+        return Q.reject("The given path to the project does not exist." +
             " Please provide a path to the project you would like to update.");
     }
 
     return extractMetadata(projectPath).then(function (metadata) {
+        logger.verbose('Removing old project...');
         shell.rm('-rf', projectPath);
 
         // setup args for create.run which requires process.argv-like array
         var createArgs = argv.concat([metadata.namespace, metadata.name]);
+        logger.verbose('Creating new project at ' + projectPath);
         return create.run(createArgs);
     });
 };
